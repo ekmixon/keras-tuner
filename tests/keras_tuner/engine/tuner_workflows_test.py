@@ -43,8 +43,10 @@ def build_model(hp):
     x = inputs
     for i in range(hp.Int("num_layers", 1, 4)):
         x = keras.layers.Dense(
-            units=hp.Int("units_" + str(i), 5, 9, 1, default=6), activation="relu"
+            units=hp.Int(f"units_{str(i)}", 5, 9, 1, default=6),
+            activation="relu",
         )(x)
+
     outputs = keras.layers.Dense(NUM_CLASSES, activation="softmax")(x)
     model = keras.Model(inputs, outputs)
     model.compile(
@@ -91,9 +93,10 @@ class ExampleHyperModel(keras_tuner.HyperModel):
         x = inputs
         for i in range(hp.Int("num_layers", 1, 4)):
             x = keras.layers.Dense(
-                units=hp.Int("units_" + str(i), 5, 9, 1, default=6),
+                units=hp.Int(f"units_{str(i)}", 5, 9, 1, default=6),
                 activation="relu",
             )(x)
+
         outputs = keras.layers.Dense(NUM_CLASSES, activation="softmax")(x)
         model = keras.Model(inputs, outputs)
         model.compile(
@@ -252,9 +255,7 @@ def test_static_space(tmp_dir):
         inputs = keras.Input(shape=(INPUT_DIM,))
         x = inputs
         for i in range(hp.get("num_layers")):
-            x = keras.layers.Dense(
-                units=hp.get("units_" + str(i)), activation="relu"
-            )(x)
+            x = keras.layers.Dense(units=hp.get(f"units_{str(i)}"), activation="relu")(x)
         outputs = keras.layers.Dense(NUM_CLASSES, activation="softmax")(x)
         model = keras.Model(inputs, outputs)
         model.compile(
@@ -294,9 +295,7 @@ def test_static_space_errors(tmp_dir):
         inputs = keras.Input(shape=(INPUT_DIM,))
         x = inputs
         for i in range(hp.get("num_layers")):
-            x = keras.layers.Dense(
-                units=hp.get("units_" + str(i)), activation="relu"
-            )(x)
+            x = keras.layers.Dense(units=hp.get(f"units_{str(i)}"), activation="relu")(x)
         outputs = keras.layers.Dense(NUM_CLASSES, activation="softmax")(x)
         model = keras.Model(inputs, outputs)
         model.compile(
@@ -331,9 +330,7 @@ def test_static_space_errors(tmp_dir):
         inputs = keras.Input(shape=(INPUT_DIM,))
         x = inputs
         for i in range(hp.get("num_layers")):
-            x = keras.layers.Dense(
-                units=hp.get("units_" + str(i)), activation="relu"
-            )(x)
+            x = keras.layers.Dense(units=hp.get(f"units_{str(i)}"), activation="relu")(x)
         outputs = keras.layers.Dense(NUM_CLASSES, activation="softmax")(x)
         model = keras.Model(inputs, outputs)
         model.compile(
@@ -799,8 +796,9 @@ def test_convert_hyperparams_to_hparams():
     }
     hparams_repr_list = [repr(hparams[x]) for x in hparams.keys()]
     expected_hparams_repr_list = [
-        repr(expected_hparams[x]) for x in expected_hparams.keys()
+        repr(expected_hparams[x]) for x in expected_hparams
     ]
+
     assert sorted(hparams_repr_list) == sorted(expected_hparams_repr_list)
 
     hps = keras_tuner.engine.hyperparameters.HyperParameters()

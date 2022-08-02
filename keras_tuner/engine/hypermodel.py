@@ -126,7 +126,7 @@ class KerasHyperModel(HyperModel):
                 if config_module.DEBUG:
                     traceback.print_exc()
 
-                print("Invalid model %s/%s" % (i, self._max_fail_streak))
+                print(f"Invalid model {i}/{self._max_fail_streak}")
 
                 if i == self._max_fail_streak:
                     raise RuntimeError("Too many failed attempts to build model.")
@@ -135,14 +135,14 @@ class KerasHyperModel(HyperModel):
             # Stop if `build()` does not return a valid model.
             if not isinstance(model, keras.models.Model):
                 raise RuntimeError(
-                    "Model-building function did not return "
-                    "a valid Keras Model instance, found {}".format(model)
+                    f"Model-building function did not return a valid Keras Model instance, found {model}"
                 )
+
 
             # Check model size.
             size = maybe_compute_model_size(model)
             if self.max_model_size and size > self.max_model_size:
-                print("Oversized model: {} parameters -- skipping".format(size))
+                print(f"Oversized model: {size} parameters -- skipping")
                 if i == self._max_fail_streak:
                     raise RuntimeError("Too many consecutive oversized models.")
                 continue
@@ -190,11 +190,10 @@ def get_hypermodel(hypermodel):
     """Gets a HyperModel from a HyperModel or callable."""
     if isinstance(hypermodel, HyperModel):
         return hypermodel
-    else:
-        if not callable(hypermodel):
-            raise ValueError(
-                "The `hypermodel` argument should be either "
-                "a callable with signature `build(hp)` returning a model, "
-                "or an instance of `HyperModel`."
-            )
-        return DefaultHyperModel(hypermodel)
+    if not callable(hypermodel):
+        raise ValueError(
+            "The `hypermodel` argument should be either "
+            "a callable with signature `build(hp)` returning a model, "
+            "or an instance of `HyperModel`."
+        )
+    return DefaultHyperModel(hypermodel)

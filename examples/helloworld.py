@@ -30,9 +30,10 @@ def build_model(hp):
     for i in range(hp.Int("num_layers", 2, 20)):
         model.add(
             layers.Dense(
-                units=hp.Int("units_" + str(i), 32, 512, 32), activation="relu"
+                units=hp.Int(f"units_{str(i)}", 32, 512, 32), activation="relu"
             )
         )
+
     model.add(layers.Dense(10, activation="softmax"))
     model.compile(
         optimizer=keras.optimizers.Adam(
@@ -93,9 +94,10 @@ class MyHyperModel(HyperModel):
         for i in range(hp.Int("num_layers", 2, 20)):
             model.add(
                 layers.Dense(
-                    units=hp.Int("units_" + str(i), 32, 512, 32), activation="relu"
+                    units=hp.Int(f"units_{str(i)}", 32, 512, 32), activation="relu"
                 )
             )
+
         model.add(layers.Dense(self.classes, activation="softmax"))
         model.compile(
             optimizer=keras.optimizers.Adam(
@@ -191,7 +193,7 @@ hp.Int("num_layers", 2, 20)
 def build_model(hp):
     model = keras.Sequential()
     model.add(layers.Flatten(input_shape=(28, 28)))
-    for i in range(hp.get("num_layers")):
+    for _ in range(hp.get("num_layers")):
         model.add(layers.Dense(32, activation="relu"))
     model.add(layers.Dense(10, activation="softmax"))
     model.compile(
@@ -231,9 +233,11 @@ def build_model(hp):
         with hp.conditional_scope("num_layers", list(range(i + 1, max_layers + 1))):
             model.add(
                 layers.Dense(
-                    units=hp.Int("units_" + str(i), 32, 256, 32), activation="relu"
+                    units=hp.Int(f"units_{str(i)}", 32, 256, 32),
+                    activation="relu",
                 )
             )
+
     model.add(layers.Dense(10, activation="softmax"))
     model.compile(
         optimizer=keras.optimizers.Adam(1e-4),
@@ -274,7 +278,7 @@ def build_model(hp):
         model.add(
             layers.Dense(
                 units=hp.Int(
-                    "units_" + str(i),
+                    f"units_{str(i)}",
                     32,
                     256,
                     32,
@@ -284,6 +288,7 @@ def build_model(hp):
                 activation="relu",
             )
         )
+
         model.add(layers.Dense(10, activation="softmax"))
         model.compile(
             optimizer=keras.optimizers.Adam(1e-4),

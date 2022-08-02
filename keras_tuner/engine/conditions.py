@@ -58,7 +58,7 @@ class Condition(object):
         return cls(**config)  # pytype: disable=not-instantiable
 
     @classmethod
-    def from_proto(self, proto):
+    def from_proto(cls, proto):
         kind = proto.WhichOneof("kind")
         if kind == "parent":
             parent = getattr(proto, kind)
@@ -66,7 +66,7 @@ class Condition(object):
             values = parent.values
             values = [getattr(v, v.WhichOneof("kind")) for v in values]
             return Parent(name=name, values=values)
-        raise ValueError("Unrecognized condition of type: {}".format(kind))
+        raise ValueError(f"Unrecognized condition of type: {kind}")
 
 
 class Parent(Condition):
@@ -138,6 +138,4 @@ class Parent(Condition):
 def _to_list(values):
     if isinstance(values, list):
         return values
-    if isinstance(values, tuple):
-        return list(values)
-    return [values]
+    return list(values) if isinstance(values, tuple) else [values]

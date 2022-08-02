@@ -117,10 +117,9 @@ class Tuner(base_tuner.BaseTuner):
 
         if isinstance(oracle.objective, list) and len(oracle.objective) > 1:
             raise ValueError(
-                "Multi-objective is not supported, found: {}".format(
-                    oracle.objective
-                )
+                f"Multi-objective is not supported, found: {oracle.objective}"
             )
+
 
         self.distribution_strategy = distribution_strategy
 
@@ -198,9 +197,11 @@ class Tuner(base_tuner.BaseTuner):
                 metrics[metric].append(best_value)
 
         # Average the results across executions and send to the Oracle.
-        averaged_metrics = {}
-        for metric, execution_values in metrics.items():
-            averaged_metrics[metric] = np.mean(execution_values)
+        averaged_metrics = {
+            metric: np.mean(execution_values)
+            for metric, execution_values in metrics.items()
+        }
+
         self.oracle.update_trial(
             trial.trial_id, metrics=averaged_metrics, step=self._reported_step
         )
@@ -306,11 +307,11 @@ class Tuner(base_tuner.BaseTuner):
                 )
 
     def _get_tensorboard_dir(self, logdir, trial_id, execution):
-        return os.path.join(str(logdir), str(trial_id), "execution" + str(execution))
+        return os.path.join(str(logdir), str(trial_id), f"execution{str(execution)}")
 
     def _get_checkpoint_dir(self, trial_id, epoch):
         return os.path.join(
-            self.get_trial_dir(trial_id), "checkpoints", "epoch_" + str(epoch)
+            self.get_trial_dir(trial_id), "checkpoints", f"epoch_{str(epoch)}"
         )
 
     def _get_checkpoint_fname(self, trial_id, epoch):

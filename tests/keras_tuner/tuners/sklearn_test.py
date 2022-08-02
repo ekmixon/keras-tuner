@@ -63,8 +63,7 @@ def build_pipeline(hp):
     else:
         raise ValueError("Unrecognized model_type")
 
-    skpipeline = pipeline.Pipeline([("pca", pca), ("clf", model)])
-    return skpipeline
+    return pipeline.Pipeline([("pca", pca), ("clf", model)])
 
 
 @pytest.fixture(scope="function")

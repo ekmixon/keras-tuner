@@ -21,9 +21,10 @@ def build_model(hp):
     for i in range(3):
         model.add(
             tf.keras.layers.Dense(
-                units=hp.Int("units_" + str(i), 2, 4, 2), activation="relu"
+                units=hp.Int(f"units_{str(i)}", 2, 4, 2), activation="relu"
             )
         )
+
     model.add(tf.keras.layers.Dense(2, activation="softmax"))
     model.compile(
         optimizer=tf.keras.optimizers.Adam(
@@ -133,7 +134,7 @@ def test_bayesian_save_reload(tmp_dir):
     oracle._set_project_dir(tmp_dir, "untitled")
     oracle.reload()
 
-    for trial_id in range(3):
+    for _ in range(3):
         trial = oracle.create_trial("tuner_id")
         oracle.update_trial(trial.trial_id, {"score": 1.0})
         oracle.end_trial(trial.trial_id, "COMPLETED")
@@ -327,7 +328,7 @@ def test_distributed_optimization(tmp_dir):
     for _ in range(10):
         trials = []
         for i in range(tuners):
-            trial = oracle.create_trial("tuner_" + str(i))
+            trial = oracle.create_trial(f"tuner_{str(i)}")
             trials.append(trial)
         for trial in trials:
             oracle.update_trial(

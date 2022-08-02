@@ -52,14 +52,14 @@ def build_model(hp):
     for idx in range(num_layers):
         idx = str(idx)
 
-        filters = hp.Int("filters_" + idx, 32, 256, step=32, default=64)
+        filters = hp.Int(f"filters_{idx}", 32, 256, step=32, default=64)
         x = layers.Conv2D(
             filters=filters, kernel_size=3, padding="same", activation="relu"
         )(x)
 
         # add a pooling layers if needed
         if x.shape[1] >= 8:
-            pool_type = hp.Choice("pool_" + idx, values=["max", "avg"])
+            pool_type = hp.Choice(f"pool_{idx}", values=["max", "avg"])
             if pool_type == "max":
                 x = layers.MaxPooling2D(2)(x)
             elif pool_type == "avg":

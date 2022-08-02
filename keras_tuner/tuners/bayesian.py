@@ -36,8 +36,7 @@ def matern_kernel(x, y=None):
     # nu = 2.5
     dists = cdist(x, y)
     dists *= math.sqrt(5)
-    kernel_matrix = (1.0 + dists + dists ** 2 / 3.0) * np.exp(-dists)
-    return kernel_matrix
+    return (1.0 + dists + dists ** 2 / 3.0) * np.exp(-dists)
 
 
 class GaussianProcessRegressor(object):
@@ -336,9 +335,7 @@ class BayesianOptimizationOracle(oracle_module.Oracle):
         ]
 
     def _get_hp_bounds(self):
-        bounds = []
-        for hp in self._nonfixed_space():
-            bounds.append([0, 1])
+        bounds = [[0, 1] for _ in self._nonfixed_space()]
         return np.array(bounds)
 
 

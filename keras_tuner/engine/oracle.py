@@ -239,14 +239,17 @@ class Oracle(stateful.Stateful):
                 `"INVALID"` means a trial has crashed or been deemed
                 infeasible.
         """
-        trial = None
-        for tuner_id, ongoing_trial in self.ongoing_trials.items():
-            if ongoing_trial.trial_id == trial_id:
-                trial = self.ongoing_trials.pop(tuner_id)
-                break
+        trial = next(
+            (
+                self.ongoing_trials.pop(tuner_id)
+                for tuner_id, ongoing_trial in self.ongoing_trials.items()
+                if ongoing_trial.trial_id == trial_id
+            ),
+            None,
+        )
 
         if not trial:
-            raise ValueError("Ongoing trial with id: {} not found.".format(trial_id))
+            raise ValueError(f"Ongoing trial with id: {trial_id} not found.")
 
         trial.status = status
         if status == trial_lib.TrialStatus.COMPLETED:
@@ -268,16 +271,17 @@ class Oracle(stateful.Stateful):
             hyperparameters: An updated `HyperParameters` object.
         """
         hps = hyperparameters.space
-        new_hps = []
-        for hp in hps:
-            if not self.hyperparameters._exists(hp.name, hp.conditions):
-                new_hps.append(hp)
+        new_hps = [
+            hp
+            for hp in hps
+            if not self.hyperparameters._exists(hp.name, hp.conditions)
+        ]
 
         if new_hps and not self.allow_new_entries:
             raise RuntimeError(
-                "`allow_new_entries` is `False`, but found "
-                "new entries {}".format(new_hps)
+                f"`allow_new_entries` is `False`, but found new entries {new_hps}"
             )
+
         if not self.tune_new_entries:
             # New entries should always use the default value.
             return
@@ -304,19 +308,18 @@ class Oracle(stateful.Stateful):
         return sorted_trials[:num_trials]
 
     def remaining_trials(self):
-        if self.max_trials:
-            return self.max_trials - len(self.trials.items())
-        else:
-            return None
+        return self.max_trials - len(self.trials.items()) if self.max_trials else None
 
     def get_state(self):
         # `self.trials` are saved in their own, Oracle-agnostic files.
         # Just save the IDs for ongoing trials, since these are in `trials`.
-        state = {}
-        state["ongoing_trials"] = {
-            tuner_id: trial.trial_id
-            for tuner_id, trial in self.ongoing_trials.items()
+        state = {
+            "ongoing_trials": {
+                tuner_id: trial.trial_id
+                for tuner_id, trial in self.ongoing_trials.items()
+            }
         }
+
         # Hyperparameters are part of the state because they can be added to
         # during the course of the search.
         state["hyperparameters"] = self.hyperparameters.get_config()
@@ -344,10 +347,9 @@ class Oracle(stateful.Stateful):
         self._project_name = project_name
         if not overwrite and tf.io.gfile.exists(self._get_oracle_fname()):
             tf.get_logger().info(
-                "Reloading Oracle from existing project {}".format(
-                    self._get_oracle_fname()
-                )
+                f"Reloading Oracle from existing project {self._get_oracle_fname()}"
             )
+
             self.reload()
 
     @property
@@ -375,10 +377,7 @@ class Oracle(stateful.Stateful):
             super(Oracle, self).reload(self._get_oracle_fname())
         except KeyError:
             raise RuntimeError(
-                "Error reloading `Oracle` from existing project. If you did not "
-                "mean to reload from an existing project, change the `project_name` "
-                "or pass `overwrite=True` when creating the `Tuner`. Found existing "
-                "project at: {}".format(self._project_dir)
+                f"Error reloading `Oracle` from existing project. If you did not mean to reload from an existing project, change the `project_name` or pass `overwrite=True` when creating the `Tuner`. Found existing project at: {self._project_dir}"
             )
 
     def _get_oracle_fname(self):
@@ -386,7 +385,7 @@ class Oracle(stateful.Stateful):
 
     def _compute_values_hash(self, values):
         keys = sorted(values.keys())
-        s = "".join(str(k) + "=" + str(values[k]) for k in keys)
+        s = "".join(f"{str(k)}={str(values[k])}" for k in keys)
         return hashlib.sha256(s.encode("utf-8")).hexdigest()[:32]
 
     def _check_objective_found(self, metrics):
@@ -399,14 +398,11 @@ class Oracle(stateful.Stateful):
                 objective_names.remove(metric_name)
         if objective_names:
             raise ValueError(
-                "Objective value missing in metrics reported to the "
-                "Oracle, expected: {}, found: {}".format(
-                    objective_names, metrics.keys()
-                )
+                f"Objective value missing in metrics reported to the Oracle, expected: {objective_names}, found: {metrics.keys()}"
             )
 
     def _get_trial_dir(self, trial_id):
-        dirname = os.path.join(self._project_dir, "trial_" + str(trial_id))
+        dirname = os.path.join(self._project_dir, f"trial_{str(trial_id)}")
         utils.create_directory(dirname)
         return dirname
 
@@ -449,29 +445,27 @@ def _format_objective(objective):
         return [_format_objective(obj) for obj in objective]
     if isinstance(objective, Objective):
         return objective
-    if isinstance(objective, str):
-        direction = metrics_tracking.infer_metric_direction(objective)
-        if direction is None:
-            error_msg = (
-                'Could not infer optimization direction ("min" or "max") '
-                'for unknown metric "{obj}". Please specify the objective  as'
-                "a `keras_tuner.Objective`, for example `keras_tuner.Objective("
-                '"{obj}", direction="min")`.'
-            )
-            error_msg = error_msg.format(obj=objective)
-            raise ValueError(error_msg)
-        return Objective(name=objective, direction=direction)
-    else:
+    if not isinstance(objective, str):
         raise ValueError(
-            "`objective` not understood, expected str or "
-            "`Objective` object, found: {}".format(objective)
+            f"`objective` not understood, expected str or `Objective` object, found: {objective}"
         )
+
+    direction = metrics_tracking.infer_metric_direction(objective)
+    if direction is None:
+        error_msg = (
+            'Could not infer optimization direction ("min" or "max") '
+            'for unknown metric "{obj}". Please specify the objective  as'
+            "a `keras_tuner.Objective`, for example `keras_tuner.Objective("
+            '"{obj}", direction="min")`.'
+        )
+        error_msg = error_msg.format(obj=objective)
+        raise ValueError(error_msg)
+    return Objective(name=objective, direction=direction)
 
 
 def _maybe_infer_direction_from_objective(objective, metric_name):
     if isinstance(objective, Objective):
         objective = [objective]
-    for obj in objective:
-        if obj.name == metric_name:
-            return obj.direction
-    return None
+    return next(
+        (obj.direction for obj in objective if obj.name == metric_name), None
+    )
